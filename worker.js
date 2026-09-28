@@ -51,7 +51,7 @@ async function authorized(request,secret) {
   const p=m[1].split(".");
   if(p.length!==2)return false;
   const ts=Number(p[0]);
-  if(!Number.isFinite(ts)||Date.now()-ts>43200000||Date.now()<ts)return false;
+  if(!Number.isFinite(ts)||Date.now()-ts>600000||Date.now()<ts)return false;
   const expected=await sign(secret,p[0]),got=unb64u(p[1]);
   if(got.length!==expected.length)return false;
   let d=0;
@@ -120,7 +120,7 @@ export default {
       const token=await sessionToken(secret);
       return new Response(JSON.stringify({ok:true}),{headers:{
         "content-type":"application/json","cache-control":"no-store",
-        "set-cookie":"dp_admin="+token+"; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=43200"
+        "set-cookie":"dp_admin="+token+"; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=600"
       }});
     }
 
