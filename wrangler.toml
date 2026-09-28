@@ -2,11 +2,7 @@ name = "desiredplus-payment-portal"
 main = "worker.js"
 compatibility_date = "2026-09-29"
 
-[assets]
-directory = "."
-binding = "ASSETS"
-
 [[kv_namespaces]]
 binding = "PAYMENT_CONFIG"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+id = "7a36174d74c4453c8d6c0768d015342b"
 
