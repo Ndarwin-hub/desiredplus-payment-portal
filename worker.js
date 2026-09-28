@@ -73,7 +73,9 @@ function internalMediaUrl(value) {
   return typeof value==="string" && value.startsWith("/media/");
 }
 async function deleteMediaUrl(env,value) {
-  if(env.MEDIA && internalMediaUrl(value)) await env.MEDIA.delete(value.slice("/media/".length));
+  if(env.PAYMENT_CONFIG && internalMediaUrl(value)) {
+    await env.PAYMENT_CONFIG.delete(value.slice("/media/".length));
+  }
 }
 function sanitizeConfig(cfg) {
   const out=structuredClone(DEFAULT_CONFIG);
@@ -95,13 +97,15 @@ function sanitizeConfig(cfg) {
   }
   return out;
 }
-function mediaResponse(object) {
-  if(!object) return new Response("Not found",{status:404});
+async function mediaResponse(env,key) {
+  if(!env.PAYMENT_CONFIG) return new Response("Media storage is not configured",{status:503});
+  const object=await env.PAYMENT_CONFIG.getWithMetadata(key,{type:"arrayBuffer"});
+  if(!object.value) return new Response("Not found",{status:404});
   const h=new Headers();
-  object.writeHttpMetadata(h);
-  h.set("etag",object.httpEtag);
+  const metadata=object.metadata&&typeof object.metadata==="object"?object.metadata:{};
+  h.set("content-type",typeof metadata.contentType==="string"?metadata.contentType:"application/octet-stream");
   h.set("cache-control","public, max-age=31536000, immutable");
-  return new Response(object.body,{headers:h});
+  return new Response(object.value,{headers:h});
 }
 
 export default {
@@ -130,7 +134,7 @@ export default {
 
     if(url.pathname==="/api/media"&&request.method==="POST") {
       if(!(await authorized(request,env.ADMIN_PASSWORD||""))) return json({ok:false,error:"Unauthorized"},401);
-      if(!env.MEDIA) return json({ok:false,error:"R2 MEDIA binding is not configured"},503);
+      if(!env.PAYMENT_CONFIG) return json({ok:false,error:"PAYMENT_CONFIG KV binding is not configured"},503);
       const form=await request.formData().catch(()=>null);
       const file=form?.get("file");
       const kind=String(form?.get("kind")||"");
@@ -143,17 +147,17 @@ export default {
       if(kind==="qr"&&!methodId) return json({ok:false,error:"Payment method ID is required for QR uploads"},400);
       const ext=(file.name.match(/\.([a-z0-9]+)$/i)?.[1]||file.type.split("/")[1]||"img").toLowerCase().replace(/[^a-z0-9]/g,"");
       const key=`media/${kind}/${methodId?methodId+"/":""}${crypto.randomUUID()}.${ext}`;
-      await env.MEDIA.put(key,file.stream(),{httpMetadata:{contentType:file.type,cacheControl:"public, max-age=31536000, immutable"}});
+      await env.PAYMENT_CONFIG.put(key,await file.arrayBuffer(),{metadata:{contentType:file.type}});
       return json({ok:true,url:"/"+key});
     }
 
     if(url.pathname==="/api/media"&&request.method==="DELETE") {
       if(!(await authorized(request,env.ADMIN_PASSWORD||""))) return json({ok:false,error:"Unauthorized"},401);
-      if(!env.MEDIA)return json({ok:false,error:"R2 MEDIA binding is not configured"},503);
+      if(!env.PAYMENT_CONFIG)return json({ok:false,error:"PAYMENT_CONFIG KV binding is not configured"},503);
       const body=await request.json().catch(()=>({}));
       const value=String(body.url||"");
       if(!internalMediaUrl(value))return json({ok:false,error:"Only portal media URLs can be deleted"},400);
-      await env.MEDIA.delete(value.slice("/media/".length));
+      await env.PAYMENT_CONFIG.delete(value.slice("/media/".length));
       return json({ok:true});
     }
 
@@ -165,7 +169,7 @@ export default {
       const oldMethods=[...(previous.nepal||[]),...(previous.international||[])];
       const newMethods=[...(next.nepal||[]),...(next.international||[])];
       const newIds=new Set(newMethods.map(m=>m.id));
-      if(env.MEDIA) {
+      if(env.PAYMENT_CONFIG) {
         for(const m of oldMethods) {
           if(!newIds.has(m.id)) {
             await deleteMediaUrl(env,m.logo);
@@ -186,8 +190,8 @@ export default {
     }
 
     if(url.pathname.startsWith("/media/")&&request.method==="GET") {
-      if(!env.MEDIA)return new Response("R2 not configured",{status:503});
-      return mediaResponse(await env.MEDIA.get(url.pathname.slice(1)));
+      if(!env.PAYMENT_CONFIG)return new Response("Media storage is not configured",{status:503});
+      return mediaResponse(env,url.pathname.slice(1));
     }
 
     return env.ASSETS.fetch(request);
