@@ -9,3 +9,7 @@ binding = "ASSETS"
 [[kv_namespaces]]
 binding = "PAYMENT_CONFIG"
 id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+
+[[r2_buckets]]
+binding = "MEDIA"
+bucket_name = "desiredplus-payment-media"
