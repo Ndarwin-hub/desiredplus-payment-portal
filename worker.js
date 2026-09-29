@@ -108,11 +108,52 @@ async function mediaResponse(env,key) {
   return new Response(object.value,{headers:h});
 }
 
+
+async function verificationFetch(env,path,init={}) {
+  const token=env.PAYMENT_VERIFICATION_TOKEN||"";
+  if(!token) throw new Error("Payment verification is not configured");
+  const headers=new Headers(init.headers||{});
+  headers.set("x-internal-token",token);
+  if(init.body && !headers.has("content-type")) headers.set("content-type","application/json");
+  return fetch("https://payment-verification-system.desiredplus-contact.workers.dev"+path,{...init,headers});
+}
+function verificationDetails(m) {
+  const details={};
+  for(const d of Array.isArray(m?.details)?m.details:[]) {
+    if(Array.isArray(d)&&d.length>=2&&String(d[0]).trim()) details[String(d[0]).trim()]=String(d[1]??"").trim();
+  }
+  return details;
+}
+
 export default {
   async fetch(request,env) {
     const url=new URL(request.url);
 
     if(url.pathname==="/api/config"&&request.method==="GET") return json(await getConfig(env));
+
+
+    if(url.pathname==="/api/verification/session"&&request.method==="POST") {
+      const body=await request.json().catch(()=>({}));
+      const paymentMethodId=String(body.payment_method_id||"").trim();
+      if(!paymentMethodId) return json({ok:false,error:"Payment method is required"},400);
+      const cfg=await getConfig(env);
+      const method=[...(cfg.nepal||[]),...(cfg.international||[])].find(m=>m.id===paymentMethodId);
+      if(!method) return json({ok:false,error:"Payment method not found"},404);
+      const isNepal=(cfg.nepal||[]).some(m=>m.id===paymentMethodId);
+      const expectedCurrency=String(body.expected_currency||((method.name||"").toLowerCase().includes("usdt")?"USDT":(isNepal?"NPR":"USD")));
+      const payload={
+        external_customer_id:typeof body.external_customer_id==="string"?body.external_customer_id.slice(0,120):null,
+        payment_method_id:method.id,
+        expected_amount:body.expected_amount==null?null:String(body.expected_amount),
+        expected_currency:expectedCurrency,
+        expected_recipient:verificationDetails(method)["Account Holder"]||verificationDetails(method)["ID Owner"]||verificationDetails(method)["Holder"]||null,
+        expected_details:verificationDetails(method)
+      };
+      const r=await verificationFetch(env,"/sessions",{method:"POST",body:JSON.stringify(payload)});
+      const text=await r.text();
+      return new Response(text,{status:r.status,headers:{"content-type":r.headers.get("content-type")||"application/json","cache-control":"no-store"}});
+    }
+
 
     if(url.pathname==="/api/login"&&request.method==="POST") {
       const body=await request.json().catch(()=>({})),secret=env.ADMIN_PASSWORD||"";
