@@ -9,6 +9,6 @@
 .whatsapp-brand{font-size:18px;font-weight:780;margin:-7px 0 18px}
 
 .upload-label{position:relative;overflow:hidden}
-.upload-label>span{font-family:"Comic Sans MS","Segoe Print","Bradley Hand",cursive;font-weight:500;font-style:italic;letter-spacing:.01em;transform:rotate(-3deg);filter:blur(.35px);opacity:.78}
+.upload-label>span{font-family:inherit;font-weight:500;font-style:italic;letter-spacing:.01em;opacity:.9}
 .upload-label.has-preview{padding:8px}
 .upload-label.has-preview .screenshot-preview{display:block;width:100%;height:96px;object-fit:contain;border-radius:9px}
