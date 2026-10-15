@@ -12,3 +12,16 @@
 .upload-label>span{font-family:inherit;font-weight:500;font-style:italic;letter-spacing:.01em;opacity:.9}
 .upload-label.has-preview{padding:8px}
 .upload-label.has-preview .screenshot-preview{display:block;width:100%;height:96px;object-fit:contain;border-radius:9px}
+
+/* Single screenshot selection and WhatsApp handoff */
+.upload-wrap{display:grid;gap:10px}
+.screenshot-preview-wrap{position:relative;min-height:110px;padding:8px;border:1px solid var(--line);border-radius:13px;background:#fff;display:grid;place-items:center}
+.screenshot-preview-wrap[hidden]{display:none}
+.screenshot-preview-wrap img{display:block;max-width:100%;width:100%;max-height:260px;object-fit:contain;border-radius:8px}
+.remove-screenshot{position:absolute;top:8px;right:8px;width:40px;height:40px;display:grid;place-items:center;border-radius:11px;background:#dc2626;color:#fff;font-size:21px;line-height:1;box-shadow:0 3px 10px rgba(0,0,0,.2);cursor:pointer}
+.verification-status{padding:11px 12px;border:1px solid var(--line);border-radius:11px;background:#f4f6f5;color:#38443d;font-size:13px;line-height:1.45;font-weight:650}
+.contact-btn{min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px}
+.contact-btn span{font-size:16px;line-height:1.2}
+.contact-btn small{font-size:12px;line-height:1.2;font-weight:600}
+.contact-btn.enabled{background:var(--green);color:#fff}
+.contact-btn.disabled{background:var(--disabled);color:#7a827e}
