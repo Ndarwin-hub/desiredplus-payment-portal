@@ -15,7 +15,7 @@ async function unlock(input){
   const file=input.files&&input.files[0];
   if(!file)return;
   const status=document.getElementById("verificationStatus");
-  if(!file.type.startsWith("image/")){input.value="";if(status)status.textContent="Payment verification status: Please select an image file.";return}
+  if(!file.type.startsWith("image/")){input.value="";if(status)status.textContent="Payment verification status: Please select an image file.";syncVerificationStatusStyle();return}
   clearSelectedScreenshot(false);
   const generation=++screenshotGeneration;
   const label=document.getElementById("uploadLabel"),prompt=document.getElementById("uploadPrompt"),preview=document.getElementById("screenshotPreview"),img=document.getElementById("screenshotImage"),b=document.getElementById("contactBtn");

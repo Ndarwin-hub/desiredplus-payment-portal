@@ -5,7 +5,7 @@
 .qr-controls{display:flex;align-items:center;justify-content:center;gap:18px;margin-top:8px}
 .qr-controls button{width:36px;height:32px;border:1px solid var(--line);border-radius:9px;background:#f4f6f5;color:var(--green-dark);font-size:20px;font-weight:700;cursor:pointer}
 .qr-controls span{min-width:54px;text-align:center;font-size:13px;font-weight:750;color:var(--muted)}
-.upload-label{display:grid;place-items:center;min-height:112px;padding:14px 12px;text-align:center}
+.upload-label{display:grid;place-items:center;min-height:150px;padding:14px 12px;text-align:center}
 .whatsapp-brand{font-size:18px;font-weight:780;margin:-7px 0 18px}
 
 .upload-label{position:relative;overflow:hidden}
