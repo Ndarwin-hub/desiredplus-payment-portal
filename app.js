@@ -1,5 +1,7 @@
 const defaults={title:"Payment Methods",nepalMin:"Rs. 1,000 NPR",internationalMin:"$20 USD/USDT",time:"30 minutes",screenshotInstruction:"Take the screenshot of Successful payment and upload it below",contactMessage:"Please send same screenshot on message to verify, I will know you are waiting and contact you as soon as possible, Please Don't panic you are in queue",whatsappName:"DARWIN NIROULA",whatsappUsername:"ndarwin1414",whatsappPhone:"+9779842723995",nepal:[{id:"nabil",name:"Nabil Bank Limited",short:"NB",logo:"",qr:"",details:[["Account Holder","DARWIN NIROULA"],["Account Number","09810017535771"],["SWIFT","NARBNPKA"]]},{id:"esewa",name:"eSewa",short:"eS",logo:"",qr:"",details:[["ID Owner","DARWIN NIROULA"],["eSewa ID","+9779842723995"],["Username","ndarwin1414"]]}],international:[{id:"trc20",name:"USDT – TRC20 (Tron)",short:"₮",logo:"",qr:"",details:[["Network","TRC20 (Tron)"],["Wallet Address","TH4guJP4iXEpxTZwgdz4NzenSv7DH3oVzW"],["Holder","DARWIN NIROULA"]]},{id:"bep20",name:"USDT – BEP20 (Binance Smart Chain)",short:"₮",logo:"",qr:"",details:[["Network","BEP20 (Binance Smart Chain)"],["Wallet Address","0x5ef45b836e6005ce6f5ed7c2aee8d235a104fc76"],["Holder","DARWIN NIROULA"]]},{id:"erc20",name:"USDT – ERC20 (Ethereum)",short:"₮",logo:"",qr:"",details:[["Network","ERC20 (Ethereum)"],["Wallet Address","0x5ef45b836e6005ce6f5ed7c2aee8d235a104fc76"],["Holder","DARWIN NIROULA"]]},{id:"neteller",name:"NETELLER",short:"N",logo:"",qr:"",details:[["NETELLER ID","363887821"],["Holder","DARWIN NIROULA"]]},{id:"skrill",name:"SKRILL",short:"S",logo:"",qr:"",details:[["SKRILL ID","241971338"],["Holder","DARWIN NIROULA"]]},{id:"payoneer",name:"PAYONEER",short:"P",logo:"",qr:"",details:[["PAYONEER ID","76121661"],["Holder","DARWIN NIROULA"]]}]};
-let cfg=defaults,selected=null;const allMethods=()=>[...cfg.nepal,...cfg.international];const app=document.getElementById("app");const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
+let cfg=defaults,selected=null;const allMethods=()=>[...cfg.nepal,...cfg.international];
+function syncVerificationStatusStyle(){const el=document.getElementById("verificationStatus");if(!el)return;const t=(el.textContent||"").toLowerCase();el.classList.remove("is-verified","is-not-verified");if(t.includes("no screenshot selected")||t.includes("screenshot selected")||t.includes("pending"))return;if(/\bnot verified\b/.test(t)||/\bunverified\b/.test(t))el.classList.add("is-not-verified");else if(/\bverified\b/.test(t))el.classList.add("is-verified")}
+const app=document.getElementById("app");const esc=s=>String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#039;"}[m]));
 async function load(){try{const r=await fetch("/api/config",{cache:"no-store"});if(r.ok)cfg=await r.json()}catch{}}
 function logo(m){return m.logo?'<img src="'+esc(m.logo)+'" alt="'+esc(m.name)+' logo">':'<span class="logo-fallback">'+esc(m.short||m.name.slice(0,2))+'</span>'}
 function card(m){return '<article class="method-card"><div class="logo-wrap">'+logo(m)+'</div><div class="method-name">'+esc(m.name)+'</div><button class="pay-btn" onclick="openPayment(\''+m.id+'\')">Pay</button></article>'}
@@ -23,7 +25,7 @@ async function unlock(input){
   preview.hidden=false;
   label.classList.add("has-preview");
   label.style.display="none";
-  status.textContent="Payment verification status: Screenshot selected. Payment is not yet verified.";
+  status.textContent="Payment verification status: Screenshot selected. Payment is not yet verified.";syncVerificationStatusStyle();
   b.disabled=false;b.className="contact-btn enabled";b.onclick=()=>{history.pushState({}, "", "#contact");contact()};
   input.value="";
   verificationSessionPromise=(async()=>{
@@ -35,11 +37,11 @@ async function unlock(input){
       if(!r.ok||!x.session?.id)throw new Error(x.error||"Could not start verification");
       if(generation!==screenshotGeneration)return;
       verificationSessionId=x.session.id;verificationSessionCode=x.session.whatsapp_code||null;
-      status.textContent="Payment verification status: Not verified. Use Contact Details to continue verification." ;
+      status.textContent="Payment verification status: Not verified. Use Contact Details to continue verification." ;syncVerificationStatusStyle();
     }catch(e){
       if(generation!==screenshotGeneration)return;
       verificationSessionId=null;verificationSessionCode=null;
-      status.textContent="Payment verification status: Not verified. Use Contact Details for manual verification.";
+      status.textContent="Payment verification status: Not verified. Use Contact Details for manual verification.";syncVerificationStatusStyle();
     }
   })();
 }
@@ -52,7 +54,7 @@ function clearSelectedScreenshot(clearInput=true){
   if(label)label.classList.remove("has-preview");
   if(label)label.style.display="";
   if(prompt){prompt.textContent="Upload Payment Screenshot Here";prompt.style.display="block"}
-  if(status)status.textContent="Payment verification status: No screenshot selected.";
+  if(status){status.textContent="Payment verification status: No screenshot selected.";syncVerificationStatusStyle();}
   if(b){b.disabled=true;b.className="contact-btn disabled";b.onclick=null}
   verificationFiles=[];verificationSessionId=null;verificationSessionCode=null;verificationSessionPromise=null;
   if(clearInput&&input)input.value="";
